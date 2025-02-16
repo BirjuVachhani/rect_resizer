@@ -3,6 +3,271 @@ import 'package:test/test.dart';
 import 'package:vector_math/vector_math.dart';
 
 void main() {
+  group('getLargestIntersectionDelta', () {
+    test('no intersection', () {
+      final rect = Box.fromLTRB(500, 500, 800, 800);
+      final clampingRect = Box.fromLTRB(100, 100, 1100, 1100);
+
+      final (:amount, :side, :singleIntersection) =
+          getLargestIntersectionDelta(rect, clampingRect);
+
+      expect(amount, 0);
+      expect(side, Side.bottom);
+      expect(singleIntersection, true);
+    });
+
+    test('bottom intersection', () {
+      final rect = Box.fromLTRB(500, 500, 800, 1200);
+      final clampingRect = Box.fromLTRB(100, 100, 1100, 1100);
+
+      final (:amount, :side, :singleIntersection) =
+          getLargestIntersectionDelta(rect, clampingRect);
+
+      expect(amount, 100);
+      expect(side, Side.bottom);
+      expect(singleIntersection, true);
+    });
+
+    test('right intersection', () {
+      final rect = Box.fromLTRB(500, 500, 1200, 800);
+      final clampingRect = Box.fromLTRB(100, 100, 1100, 1100);
+
+      final (:amount, :side, :singleIntersection) =
+          getLargestIntersectionDelta(rect, clampingRect);
+
+      expect(amount, 100);
+      expect(side, Side.right);
+      expect(singleIntersection, true);
+    });
+
+    test('top intersection', () {
+      final rect = Box.fromLTRB(500, 0, 800, 800);
+      final clampingRect = Box.fromLTRB(100, 100, 1100, 1100);
+
+      final (:amount, :side, :singleIntersection) =
+          getLargestIntersectionDelta(rect, clampingRect);
+
+      expect(amount, 100);
+      expect(side, Side.top);
+      expect(singleIntersection, true);
+    });
+
+    test('left intersection', () {
+      final rect = Box.fromLTRB(0, 500, 800, 800);
+      final clampingRect = Box.fromLTRB(100, 100, 1100, 1100);
+
+      final (:amount, :side, :singleIntersection) =
+          getLargestIntersectionDelta(rect, clampingRect);
+
+      expect(amount, 100);
+      expect(side, Side.left);
+      expect(singleIntersection, true);
+    });
+
+    test('top right intersection - top', () {
+      final rect = Box.fromLTRB(-99, -100, 1200, 800);
+      final clampingRect = Box.fromLTRB(100, 100, 1100, 1100);
+
+      final (:amount, :side, :singleIntersection) =
+          getLargestIntersectionDelta(rect, clampingRect);
+
+      expect(amount, 200);
+      expect(side, Side.top);
+      expect(singleIntersection, false);
+    });
+
+    test('top right intersection - right', () {
+      final rect = Box.fromLTRB(500, -99, 1300, 800);
+      final clampingRect = Box.fromLTRB(100, 100, 1100, 1100);
+
+      final (:amount, :side, :singleIntersection) =
+          getLargestIntersectionDelta(rect, clampingRect);
+
+      expect(amount, 200);
+      expect(side, Side.right);
+      expect(singleIntersection, false);
+    });
+
+    test('top left intersection - top', () {
+      final rect = Box.fromLTRB(-99, -100, 800, 800);
+      final clampingRect = Box.fromLTRB(100, 100, 1100, 1100);
+
+      final (:amount, :side, :singleIntersection) =
+          getLargestIntersectionDelta(rect, clampingRect);
+
+      expect(amount, 200);
+      expect(side, Side.top);
+      expect(singleIntersection, false);
+    });
+
+    test('top left intersection - left', () {
+      final rect = Box.fromLTRB(-100, -99, 800, 800);
+      final clampingRect = Box.fromLTRB(100, 100, 1100, 1100);
+
+      final (:amount, :side, :singleIntersection) =
+          getLargestIntersectionDelta(rect, clampingRect);
+
+      expect(amount, 200);
+      expect(side, Side.left);
+      expect(singleIntersection, false);
+    });
+
+    test('bottom right intersection - bottom', () {
+      final rect = Box.fromLTRB(500, 500, 1299, 1300);
+      final clampingRect = Box.fromLTRB(100, 100, 1100, 1100);
+
+      final (:amount, :side, :singleIntersection) =
+          getLargestIntersectionDelta(rect, clampingRect);
+
+      expect(amount, 200);
+      expect(side, Side.bottom);
+      expect(singleIntersection, false);
+    });
+
+    test('bottom right intersection - right', () {
+      final rect = Box.fromLTRB(500, 500, 1300, 1299);
+      final clampingRect = Box.fromLTRB(100, 100, 1100, 1100);
+
+      final (:amount, :side, :singleIntersection) =
+          getLargestIntersectionDelta(rect, clampingRect);
+
+      expect(amount, 200);
+      expect(side, Side.right);
+      expect(singleIntersection, false);
+    });
+
+    test('bottom left intersection - bottom', () {
+      final rect = Box.fromLTRB(-99, 500, 800, 1300);
+      final clampingRect = Box.fromLTRB(100, 100, 1100, 1100);
+
+      final (:amount, :side, :singleIntersection) =
+          getLargestIntersectionDelta(rect, clampingRect);
+
+      expect(amount, 200);
+      expect(side, Side.bottom);
+      expect(singleIntersection, false);
+    });
+
+    test('bottom left intersection - left', () {
+      final rect = Box.fromLTRB(-100, 500, 800, 1299);
+      final clampingRect = Box.fromLTRB(100, 100, 1100, 1100);
+
+      final (:amount, :side, :singleIntersection) =
+          getLargestIntersectionDelta(rect, clampingRect);
+
+      expect(amount, 200);
+      expect(side, Side.left);
+      expect(singleIntersection, false);
+    });
+  });
+
+  group('stopRectAtClampingRect', () {
+    test('no intersection', () {
+      final rect = Box.fromLTRB(500, 500, 800, 800);
+      final clampingRect = Box.fromLTRB(100, 100, 1100, 1100);
+
+      final correctiveDelta = BoxTransformer.stopRectAtClampingRect(
+        rect: rect,
+        clampingRect: clampingRect,
+        rotation: 0,
+      );
+
+      expect(correctiveDelta, Vector2.zero());
+    });
+
+    test('bottom intersection', () {
+      final rect = Box.fromLTRB(500, 500, 800, 1200);
+      final clampingRect = Box.fromLTRB(100, 100, 1100, 1100);
+
+      final correctiveDelta = BoxTransformer.stopRectAtClampingRect(
+        rect: rect,
+        clampingRect: clampingRect,
+        rotation: 0,
+      );
+
+      expect(correctiveDelta, Vector2(0, -100));
+    });
+
+    test('right intersection', () {
+      final rect = Box.fromLTRB(500, 500, 1200, 800);
+      final clampingRect = Box.fromLTRB(100, 100, 1100, 1100);
+
+      final correctiveDelta = BoxTransformer.stopRectAtClampingRect(
+        rect: rect,
+        clampingRect: clampingRect,
+        rotation: 0,
+      );
+
+      expect(correctiveDelta, Vector2(-100, 0));
+    });
+
+    test('top intersection', () {
+      final rect = Box.fromLTRB(500, 0, 800, 800);
+      final clampingRect = Box.fromLTRB(100, 100, 1100, 1100);
+
+      final correctiveDelta = BoxTransformer.stopRectAtClampingRect(
+        rect: rect,
+        clampingRect: clampingRect,
+        rotation: 0,
+      );
+
+      expect(correctiveDelta, Vector2(0, 100));
+    });
+
+    test('left intersection', () {
+      final rect = Box.fromLTRB(0, 500, 800, 800);
+      final clampingRect = Box.fromLTRB(100, 100, 1100, 1100);
+
+      final correctiveDelta = BoxTransformer.stopRectAtClampingRect(
+        rect: rect,
+        clampingRect: clampingRect,
+        rotation: 0,
+      );
+
+      expect(correctiveDelta, Vector2(100, 0));
+    });
+
+    test('top right intersection - top', () {
+      final rect = Box.fromLTRB(500, -100, 1150, 800);
+      final clampingRect = Box.fromLTRB(100, 100, 1100, 1100);
+
+      final correctiveDelta = BoxTransformer.stopRectAtClampingRect(
+        rect: rect,
+        clampingRect: clampingRect,
+        rotation: 0,
+      );
+
+      expect(correctiveDelta, Vector2(-50, 200));
+    });
+
+    test('top right intersection - right', () {
+      final rect = Box.fromLTRB(500, -50, 1300, 800); // 0.727272 * 800 =581.8176
+      final clampingRect = Box.fromLTRB(100, 100, 1100, 1100);
+
+      final correctiveDelta = BoxTransformer.stopRectAtClampingRect(
+        rect: rect,
+        clampingRect: clampingRect,
+        rotation: 0,
+      );
+
+      expect(correctiveDelta, Vector2(-200, 150));
+    });
+
+    test('bottom right intersection - bottom', () {
+      final rect = Box.fromLTRB(500, 500, 1300, 1200);
+      final clampingRect = Box.fromLTRB(100, 100, 1100, 1100);
+
+      final correctiveDelta = BoxTransformer.stopRectAtClampingRect(
+        rect: rect,
+        clampingRect: clampingRect,
+        rotation: 0,
+      );
+
+      expect(correctiveDelta, Vector2(-200, -100));
+    });
+
+  });
+
   group('flipBox tests', () {
     test('flipBox test with bottom-right handle', () {
       final box = Box.fromLTWH(500, 500, 400, 300);

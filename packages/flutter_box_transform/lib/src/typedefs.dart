@@ -3,6 +3,11 @@ import 'package:flutter/widgets.dart';
 
 import 'ui_result.dart';
 
+typedef GestureRotationStartCallback = GestureDragStartCallback;
+typedef GestureRotationUpdateCallback = GestureDragUpdateCallback;
+typedef GestureRotationEndCallback = GestureDragEndCallback;
+typedef GestureRotationCancelCallback = GestureDragCancelCallback;
+
 /// A callback that expects a [Widget] that represents any of the handles.
 /// The [handle] is the current position and size of the handle.
 typedef HandleBuilder = Widget Function(
@@ -45,7 +50,7 @@ typedef RectDragEndEvent = void Function(
 typedef RectDragCancelEvent = void Function();
 
 /// A callback that is called when the box begins a resize operation.
-typedef RectResizeStart = void Function(
+typedef RectResizeStartEvent = void Function(
   HandlePosition handle,
   DragStartDetails event,
 );
@@ -57,13 +62,36 @@ typedef RectResizeUpdateEvent = void Function(
 );
 
 /// A callback that is called when the box ends a resize operation.
-typedef RectResizeEnd = void Function(
+typedef RectResizeEndEvent = void Function(
   HandlePosition handle,
   DragEndDetails event,
 );
 
 /// A callback that is called when the box cancels a resize operation.
-typedef RectResizeCancel = void Function(
+typedef RectResizeCancelEvent = void Function(
+  HandlePosition handle,
+);
+
+/// A callback that is called when the box begins a rotation operation.
+typedef RectRotateStartEvent = void Function(
+  HandlePosition handle,
+  DragStartDetails event,
+);
+
+/// A callback that is called when the box is being rotated.
+typedef RectRotateUpdateEvent = void Function(
+  UIRotateResult result,
+  DragUpdateDetails event,
+);
+
+/// A callback that is called when the box ends a rotation operation.
+typedef RectRotateEndEvent = void Function(
+  HandlePosition handle,
+  DragEndDetails event,
+);
+
+/// A callback that is called when the box cancels a rotation operation.
+typedef RectRotateCancelEvent = void Function(
   HandlePosition handle,
 );
 

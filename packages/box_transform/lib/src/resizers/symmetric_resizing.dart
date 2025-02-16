@@ -13,6 +13,8 @@ final class SymmetricResizer extends Resizer {
     required HandlePosition handle,
     required Constraints constraints,
     required Flip flip,
+    required double rotation,
+    required BindingStrategy bindingStrategy,
   }) {
     final double horizontalMirrorRight =
         clampingRect.right - explodedRect.center.x;

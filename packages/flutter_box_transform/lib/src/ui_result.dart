@@ -13,3 +13,7 @@ typedef UIResizeResult = ResizeResult<Rect, Offset, Size>;
 /// A convenient type alias for a [TransformResult] with Flutter's [Rect],
 /// [Offset] and [Size] types.
 typedef UITransformResult = TransformResult<Rect, Offset, Size>;
+
+/// A convenient type alias for a [RotateResult] with Flutter's [Rect], [Offset]
+/// and [Size] types.
+typedef UIRotateResult = RotateResult<Rect, Offset, Size>;

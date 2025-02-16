@@ -6,29 +6,15 @@ import 'package:vector_math/vector_math.dart';
 
 import 'ui_result.dart';
 
-/// Provides convenient getters for [UITransformResult].
-extension UITransformResultExt on UITransformResult {
-  /// Convenient getter for [box.size].
-  Size get size => rect.size;
-
-  /// Convenient getter for [box.topLeft].
-  Offset get position => rect.topLeft;
-
-  /// Convenient getter for [oldBox.size].
-  Size get oldSize => oldRect.size;
-
-  /// Convenient getter for [oldBox.topLeft].
-  Offset get oldPosition => oldRect.topLeft;
-}
-
 /// Provides convenient methods for [RawResizeResult].
 extension ResizeResultExt on RawResizeResult {
   /// Converts a `ResizeResult` from `rect_resizer` to a `UIResizeResult`
   UIResizeResult toUI() {
     return UIResizeResult(
-      /// Creates a new `UIResizeResult` instance with the converted data
       rect: rect.toRect(),
       oldRect: oldRect.toRect(),
+      boundingRect: boundingRect.toRect(),
+      oldBoundingRect: oldBoundingRect.toRect(),
       flip: flip,
       resizeMode: resizeMode,
       delta: delta.toOffset(),
@@ -48,12 +34,28 @@ extension MoveResultExt on RawMoveResult {
   /// Converts a `MoveResult` from `rect_resizer` to a `UIMoveResult`
   UIMoveResult toUI() {
     return UIMoveResult(
-      /// Creates a new `UIMoveResult` instance with the converted data
       rect: rect.toRect(),
       oldRect: oldRect.toRect(),
+      boundingRect: boundingRect.toRect(),
+      oldBoundingRect: oldBoundingRect.toRect(),
       delta: delta.toOffset(),
       rawSize: rawSize.toSize(),
       largestRect: largestRect.toRect(),
+    );
+  }
+}
+
+/// Provides convenient methods for [RawRotateResult].
+extension RotateResultExt on RawRotateResult {
+  /// Converts a `RotateResult` from `rect_resizer` to a `UIRotateResult`
+  UIRotateResult toUI() {
+    return UIRotateResult(
+      rect: rect.toRect(),
+      boundingRect: boundingRect.toRect(),
+      oldBoundingRect: oldBoundingRect.toRect(),
+      delta: delta.toOffset(),
+      rawSize: rawSize.toSize(),
+      rotation: rotation,
     );
   }
 }

@@ -13,6 +13,8 @@ final class SymmetricScaleResizer extends Resizer {
     required HandlePosition handle,
     required Constraints constraints,
     required Flip flip,
+    required double rotation,
+    required BindingStrategy bindingStrategy,
   }) {
     switch (handle) {
       case HandlePosition.none:

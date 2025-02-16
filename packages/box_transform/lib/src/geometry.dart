@@ -308,6 +308,9 @@ class Dimension {
   /// smallest integer values.
   Dimension floor() => Dimension(width.floorToDouble(), height.floorToDouble());
 
+  /// Returns a [Vector2] representation of this [Dimension].
+  Vector2 toVector() => Vector2(width, height);
+
   /// Linearly interpolate between two sizes
   ///
   /// If either size is null, this function interpolates from [Dimension.zero].
@@ -412,28 +415,26 @@ class Box {
   /// Construct a rectangle from given handle and its origin.
   factory Box.fromHandle(
       Vector2 origin, HandlePosition handle, double width, double height) {
-    switch (handle) {
-      case HandlePosition.none:
-        throw ArgumentError('HandlePosition.none is not supported!');
-      case HandlePosition.topLeft:
-        return Box.fromLTWH(origin.x - width, origin.y - height, width, height);
-      case HandlePosition.topRight:
-        return Box.fromLTWH(origin.x, origin.y - height, width, height);
-      case HandlePosition.bottomLeft:
-        return Box.fromLTWH(origin.x - width, origin.y, width, height);
-      case HandlePosition.bottomRight:
-        return Box.fromLTWH(origin.x, origin.y, width, height);
-      case HandlePosition.left:
-        return Box.fromLTWH(
-            origin.x - width, origin.y - height / 2, width, height);
-      case HandlePosition.top:
-        return Box.fromLTWH(
-            origin.x - width / 2, origin.y - height, width, height);
-      case HandlePosition.right:
-        return Box.fromLTWH(origin.x, origin.y - height / 2, width, height);
-      case HandlePosition.bottom:
-        return Box.fromLTWH(origin.x - width / 2, origin.y, width, height);
-    }
+    return switch (handle) {
+      HandlePosition.none =>
+        throw ArgumentError('HandlePosition.none is not supported!'),
+      HandlePosition.topLeft =>
+        Box.fromLTWH(origin.x - width, origin.y - height, width, height),
+      HandlePosition.topRight =>
+        Box.fromLTWH(origin.x, origin.y - height, width, height),
+      HandlePosition.bottomLeft =>
+        Box.fromLTWH(origin.x - width, origin.y, width, height),
+      HandlePosition.bottomRight =>
+        Box.fromLTWH(origin.x, origin.y, width, height),
+      HandlePosition.left =>
+        Box.fromLTWH(origin.x - width, origin.y - height / 2, width, height),
+      HandlePosition.top =>
+        Box.fromLTWH(origin.x - width / 2, origin.y - height, width, height),
+      HandlePosition.right =>
+        Box.fromLTWH(origin.x, origin.y - height / 2, width, height),
+      HandlePosition.bottom =>
+        Box.fromLTWH(origin.x - width / 2, origin.y, width, height)
+    };
   }
 
   /// The Vector2 of the left edge of this rectangle from the x axis.
@@ -474,8 +475,9 @@ class Box {
   static const Box largest =
       Box.fromLTRB(-_giantScalar, -_giantScalar, _giantScalar, _giantScalar);
 
-  /// Whether any of the coordinates of this rectangle are equal to positive infinity.
-  // included for consistency with Vector2 and Dimension
+  /// Whether any of the coordinates of this rectangle are equal to positive
+  /// infinity.
+  /// Included for consistency with Vector2 and Dimension
   bool get isInfinite =>
       left >= double.infinity ||
       top >= double.infinity ||
@@ -606,6 +608,23 @@ class Box {
         _ => size.aspectRatio,
       };
 
+  /// Returns a list of the four corners of this rectangle.
+  List<Vector2> get points => [
+        topLeft,
+        topRight,
+        bottomRight,
+        bottomLeft,
+      ];
+
+  /// Returns a map of the four corners of this rectangle mapped as
+  /// a [Quadrant] to a [Vector2].
+  Map<Quadrant, Vector2> get sidedPoints => {
+        Quadrant.topLeft: topLeft,
+        Quadrant.topRight: topRight,
+        Quadrant.bottomRight: bottomRight,
+        Quadrant.bottomLeft: bottomLeft,
+      };
+
   /// Whether the point specified by the given Vector2 (which is assumed to be
   /// relative to the origin) lies between the left and right and the top and
   /// bottom edges of this rectangle.
@@ -641,8 +660,8 @@ class Box {
 
     final double newLeft = math.max(left, clampedLeft);
     final double newTop = math.max(top, clampedTop);
-    double newWidth = math.min(width, childWidth);
-    double newHeight = math.min(height, childHeight);
+    final double newWidth = math.min(width, childWidth);
+    final double newHeight = math.min(height, childHeight);
 
     return Box.fromLTWH(
       newLeft,
@@ -667,6 +686,35 @@ class Box {
         right.floorToDouble(),
         bottom.floorToDouble(),
       );
+
+  /// Returns the relevant corner of this [Box] based on the given [quadrant].
+  Vector2 pointFromQuadrant(Quadrant quadrant) => switch (quadrant) {
+        Quadrant.topLeft => topLeft,
+        Quadrant.topRight => topRight,
+        Quadrant.bottomRight => bottomRight,
+        Quadrant.bottomLeft => bottomLeft,
+      };
+
+  /// Returns a value that represents the distances of the passed
+  /// [point] relative to the closest edge of this [Box]. If the point is
+  /// inside the box, the distance will be positive. If the point is outside
+  /// the box, the distance will be negative.
+  ///
+  /// Returns the [side] that the point is closest to and the [distance] to that
+  /// side.
+  (Side side, double distance) closestSideTo(Vector2 point) {
+    final double left = point.x - this.left;
+    final double right = this.right - point.x;
+    final double top = point.y - this.top;
+    final double bottom = this.bottom - point.y;
+
+    final double min = math.min(left, math.min(right, math.min(top, bottom)));
+
+    if (min == left) return (Side.left, left);
+    if (min == right) return (Side.right, right);
+    if (min == top) return (Side.top, top);
+    return (Side.bottom, bottom);
+  }
 
   /// Linearly interpolate between two rectangles.
   ///
@@ -721,5 +769,5 @@ class Box {
 
   @override
   String toString() =>
-      'Box.fromLTRB(${left.toStringAsFixed(1)}, ${top.toStringAsFixed(1)}, ${right.toStringAsFixed(1)}, ${bottom.toStringAsFixed(1)})';
+      'Box.fromLTWH(${left.toStringAsFixed(1)}, ${top.toStringAsFixed(1)}, ${width.toStringAsFixed(1)}, ${height.toStringAsFixed(1)})';
 }

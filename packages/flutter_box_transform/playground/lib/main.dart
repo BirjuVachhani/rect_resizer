@@ -110,6 +110,7 @@ class PlaygroundModel with ChangeNotifier {
           kInitialWidth,
           kInitialHeight,
         ),
+        rotation: 0,
         flip: Flip.none,
         constraintsEnabled: true,
         constraints: const BoxConstraints(
@@ -131,6 +132,10 @@ class PlaygroundModel with ChangeNotifier {
     if (result is UIResizeResult) {
       selectedBox!.flip = result.flip;
     }
+    if (result is UIRotateResult) {
+      selectedBox!.rotation = result.rotation;
+    }
+
     notifyListeners();
   }
 
@@ -176,6 +181,7 @@ class PlaygroundModel with ChangeNotifier {
       BoxData(
         name: 'Box ${boxes.length + 1}',
         imageAsset: Images.values[boxes.length % Images.values.length],
+        rotation: 0,
         rect: Rect.fromLTWH(
           playgroundArea!.center.dx - kInitialWidth / 2,
           playgroundArea!.center.dy - kInitialHeight / 2,
@@ -499,7 +505,9 @@ class _PlaygroundState extends State<Playground> with WidgetsBindingObserver {
                       ),
                       if (model.clampingEnabled && model.playgroundArea != null)
                         const ClampingRect(),
-                      for (int index = 0; index < model.boxes.length; index++)
+                      for (int index = 0;
+                          index < model.boxes.length;
+                          index++) ...[
                         ImageBox(
                           key: ValueKey(model.boxes[index].name),
                           box: model.boxes[index],
@@ -507,6 +515,125 @@ class _PlaygroundState extends State<Playground> with WidgetsBindingObserver {
                           onChanged: model.onRectChanged,
                           onSelected: () => model.onBoxSelected(index),
                         ),
+                        // Builder(
+                        //   builder: (context) {
+                        //     final box = model.boxes[index];
+                        //     final rect = box.rect.toBox();
+                        //     final bounding =
+                        //         BoxTransformer.calculateBoundingRect(
+                        //       rotation: box.rotation,
+                        //       unrotatedBox: rect,
+                        //     );
+                        //     final clampingRect = model.clampingRect.toBox();
+                        //     final (:side, :amount, :singleIntersection) =
+                        //         getLargestIntersectionDelta(
+                        //             bounding, clampingRect);
+                        //
+                        //     final Map<Quadrant, Vector2> rotatedPoints = {
+                        //       for (final MapEntry(key: quadrant, value: point)
+                        //           in rect.sidedPoints.entries)
+                        //         quadrant: BoxTransformer.rotatePointAroundVec(
+                        //             rect.center, box.rotation, point)
+                        //     };
+                        //
+                        //     // Check if any rotated point is outside the clamping rect.
+                        //     (
+                        //       Side side,
+                        //       Quadrant quadrant,
+                        //       Vector2 point,
+                        //       double dist
+                        //     )? biggestOutOfBounds;
+                        //     for (final MapEntry(key: quadrant, value: point)
+                        //         in rotatedPoints.entries) {
+                        //       if (biggestOutOfBounds == null) {
+                        //         final (side, dist) =
+                        //             clampingRect.distanceOfPoint(point);
+                        //         biggestOutOfBounds =
+                        //             (side, quadrant, point, dist);
+                        //       } else {
+                        //         final (side, dist) =
+                        //             clampingRect.distanceOfPoint(point);
+                        //         final (_, biggestDist) = clampingRect
+                        //             .distanceOfPoint(biggestOutOfBounds.$3);
+                        //         if (dist < biggestDist) {
+                        //           biggestOutOfBounds =
+                        //               (side, quadrant, point, dist);
+                        //         }
+                        //       }
+                        //     }
+                        //
+                        //     assert(biggestOutOfBounds != null);
+                        //
+                        //     final side2 = biggestOutOfBounds!.$1;
+                        //     Vector2 point = biggestOutOfBounds.$3;
+                        //     final dist = biggestOutOfBounds.$4;
+                        //
+                        //     final correctedVector = switch (side) {
+                        //       Side.left => Vector2(-dist, 0),
+                        //       Side.right => Vector2(dist, 0),
+                        //       Side.top => Vector2(0, -dist),
+                        //       Side.bottom => Vector2(0, dist),
+                        //     };
+                        //
+                        //     final adjusted = Vector2(
+                        //         point.x + correctedVector.x,
+                        //         point.y + correctedVector.y);
+                        //
+                        //     // Rotate back
+                        //     final unrotated =
+                        //         BoxTransformer.rotatePointAroundVec(
+                        //             rect.center, -box.rotation, adjusted);
+                        //
+                        //     return Stack(
+                        //       fit: StackFit.expand,
+                        //       children: [
+                        //         Positioned.fromRect(
+                        //           rect: Rect.fromCenter(
+                        //               center: point.toOffset(),
+                        //               width: 30,
+                        //               height: 30),
+                        //           child: IgnorePointer(
+                        //             child: Container(
+                        //               decoration: BoxDecoration(
+                        //                   shape: BoxShape.circle,
+                        //                   border: Border.all(
+                        //                       color: Colors.yellow, width: 3)),
+                        //             ),
+                        //           ),
+                        //         ),
+                        //         Positioned.fromRect(
+                        //           rect: Rect.fromCenter(
+                        //               center: adjusted.toOffset(),
+                        //               width: 20,
+                        //               height: 20),
+                        //           child: IgnorePointer(
+                        //             child: Container(
+                        //               decoration: BoxDecoration(
+                        //                   shape: BoxShape.circle,
+                        //                   border: Border.all(
+                        //                       color: Colors.yellow, width: 2)),
+                        //             ),
+                        //           ),
+                        //         ),
+                        //         Positioned.fromRect(
+                        //           rect: Rect.fromCenter(
+                        //               center: unrotated.toOffset(),
+                        //               width: 20,
+                        //               height: 20),
+                        //           child: IgnorePointer(
+                        //             child: Container(
+                        //               decoration: BoxDecoration(
+                        //                   shape: BoxShape.circle,
+                        //                   border: Border.all(
+                        //                       color: Colors.green, width: 3)),
+                        //             ),
+                        //           ),
+                        //         ),
+                        //       ],
+                        //     );
+                        //   },
+                        // ),
+                      ],
                       Positioned(
                         left: 16,
                         bottom: 16,
@@ -593,6 +720,8 @@ class _ImageBoxState extends State<ImageBox> {
       key: ValueKey('image-box-${box.name}'),
       rect: box.rect,
       flip: box.flip,
+      rotation: box.rotation,
+      handleAlignment: HandleAlignment.center,
       clampingRect: model.clampingEnabled ? model.clampingRect : null,
       constraints: box.constraintsEnabled ? box.constraints : null,
       onChanged: (result, event) {
@@ -773,6 +902,7 @@ class _ClampingRectState extends State<ClampingRect> {
       rect: model.clampingRect,
       flip: Flip.none,
       clampingRect: model.playgroundArea!,
+      rotatable: false,
       allowFlippingWhileResizing: false,
       constraints: BoxConstraints(minWidth: minWidth, minHeight: minHeight),
       onChanged: (result, event) => model.setClampingRect(result.rect),
@@ -825,8 +955,8 @@ class _ClampingRectState extends State<ClampingRect> {
         ),
         child: DecoratedBox(
           decoration: BoxDecoration(
-            color:
-                (anyTerminalSize ? Colors.orange : mainColor).withValues(alpha: 0.1),
+            color: (anyTerminalSize ? Colors.orange : mainColor)
+                .withValues(alpha: 0.1),
             borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(6),
             ),
@@ -1055,7 +1185,10 @@ class BoxesPanel extends StatelessWidget {
                   key: ValueKey(box.name),
                   child: Container(
                     color: box.name == model.selectedBox?.name
-                        ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.2)
+                        ? Theme.of(context)
+                            .colorScheme
+                            .primary
+                            .withValues(alpha: 0.2)
                         : null,
                     child: ListTile(
                       title: Text(box.name),
@@ -1177,6 +1310,26 @@ class PositionControls extends StatelessWidget {
                     child: ValueText(
                       '${box.rect.center.dx.toInt()} x ${box.rect.center.dy.toStringAsFixed(0)}',
                     ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              const Row(
+                children: [
+                  Expanded(child: Label('ROTATION')),
+                  Expanded(child: Label('FLIP')),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: ValueText(
+                      (box.rotation * 180 / pi).toStringAsFixed(2),
+                    ),
+                  ),
+                  Expanded(
+                    child: ValueText(box.flip.prettify),
                   ),
                 ],
               ),
@@ -2224,8 +2377,10 @@ class KeyboardListenerIndicator extends StatelessWidget {
               ),
               boxShadow: [
                 BoxShadow(
-                  color:
-                      Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.2),
+                  color: Theme.of(context)
+                      .colorScheme
+                      .onPrimary
+                      .withValues(alpha: 0.2),
                   blurRadius: 1,
                   offset: const Offset(1, 3),
                 ),
@@ -2333,6 +2488,8 @@ class BoxData {
   Rect rect2 = Rect.zero;
   Flip flip2 = Flip.none;
   BoxConstraints constraints;
+  double rotation;
+  BindingStrategy bindingStrategy;
 
   bool flipRectWhileResizing = true;
   bool flipChild = true;
@@ -2352,6 +2509,8 @@ class BoxData {
     this.rect2 = Rect.zero,
     this.flip2 = Flip.none,
     this.constraints = const BoxConstraints(minWidth: 0, minHeight: 0),
+    this.rotation = 0,
+    this.bindingStrategy = BindingStrategy.boundingBox,
     this.flipRectWhileResizing = true,
     this.flipChild = true,
     this.constraintsEnabled = false,

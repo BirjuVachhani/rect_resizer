@@ -1,9 +1,7 @@
-import 'package:box_transform/box_transform.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import 'ui_box_transform.dart';
-import 'ui_result.dart';
+import '../flutter_box_transform.dart';
 
 /// Default [ResizeModeResolver] implementation. This implementation
 /// doesn't rely on the focus system .It resolves the [ResizeMode] based on
@@ -42,14 +40,23 @@ class TransformableBoxController extends ChangeNotifier {
     Flip? flip,
     Rect? clampingRect,
     BoxConstraints? constraints,
+    double? rotation,
     ValueGetter<ResizeMode>? resizeModeResolver,
     bool allowFlippingWhileResizing = true,
+    BindingStrategy bindingStrategy = BindingStrategy.boundingBox,
   })  : _rect = rect ?? Rect.zero,
         _flip = flip ?? Flip.none,
         _clampingRect = clampingRect ?? Rect.largest,
         _constraints = constraints ?? const BoxConstraints(),
+        _rotation = rotation ?? 0.0,
         _resizeModeResolver = resizeModeResolver ?? defaultResizeModeResolver,
-        _allowFlippingWhileResizing = allowFlippingWhileResizing;
+        _allowFlippingWhileResizing = allowFlippingWhileResizing,
+        _bindingStrategy = bindingStrategy {
+    _boundingRect = BoxTransformer.calculateBoundingRect(
+      rotation: _rotation,
+      unrotatedBox: _rect.toBox(),
+    ).toRect();
+  }
 
   /// The callback function that is used to resolve the [ResizeMode] based on
   /// the pressed keys on the keyboard.
@@ -64,6 +71,27 @@ class TransformableBoxController extends ChangeNotifier {
 
   /// The current [Rect] of the [TransformableBox].
   Rect get rect => _rect;
+
+  Rect _boundingRect = Rect.zero;
+
+  /// The current bounding [Rect] of the [TransformableBox] that contains
+  /// all 4 vertices of the box, even when rotated.
+  Rect get boundingRect => _boundingRect;
+
+  double _initialRotation = 0.0;
+
+  /// The initial [rotation] of the [TransformableBox] when the resizing starts.
+  double get initialRotation => _initialRotation;
+
+  double _rotation = 0.0;
+
+  /// The current [rotation] of the [TransformableBox].
+  double get rotation => _rotation;
+
+  BindingStrategy _bindingStrategy = BindingStrategy.boundingBox;
+
+  /// The current [BindingStrategy] of the [TransformableBox].
+  BindingStrategy get bindingStrategy => _bindingStrategy;
 
   /// The current [Flip] of the [TransformableBox].
   Flip _flip = Flip.none;
@@ -155,6 +183,13 @@ class TransformableBoxController extends ChangeNotifier {
     if (notify) notifyListeners();
   }
 
+  /// Sets the initial [rotation] of the [TransformableBox].
+  void setInitialRotation(double initialRotation, {bool notify = true}) {
+    _initialRotation = initialRotation;
+
+    if (notify) notifyListeners();
+  }
+
   /// Sets the initial [Rect] of the [TransformableBox].
   void setInitialRect(Rect initialRect, {bool notify = true}) {
     _initialRect = initialRect;
@@ -187,6 +222,21 @@ class TransformableBoxController extends ChangeNotifier {
   /// Sets the current [constraints] of the [TransformableBox].
   void setConstraints(BoxConstraints constraints, {bool notify = true}) {
     _constraints = constraints;
+
+    if (notify) notifyListeners();
+  }
+
+  /// Sets the current [rotation] of the [TransformableBox].
+  void setRotation(double rotation, {bool notify = true}) {
+    _rotation = rotation;
+
+    if (notify) notifyListeners();
+  }
+
+  /// Sets the current [bindingStrategy] of the [TransformableBox].
+  void setBindingStrategy(BindingStrategy bindingStrategy,
+      {bool notify = true}) {
+    _bindingStrategy = bindingStrategy;
 
     if (notify) notifyListeners();
   }
@@ -228,9 +278,12 @@ class TransformableBoxController extends ChangeNotifier {
       initialLocalPosition: initialLocalPosition,
       localPosition: localPosition,
       clampingRect: clampingRect,
+      rotation: rotation,
+      bindingStrategy: bindingStrategy,
     );
 
     _rect = result.rect;
+    _boundingRect = result.boundingRect;
 
     if (notify) notifyListeners();
 
@@ -247,6 +300,48 @@ class TransformableBoxController extends ChangeNotifier {
 
   /// Called when the dragging of the [TransformableBox] is cancelled.
   void onDragCancel({bool notify = true}) => onDragEnd(notify: notify);
+
+  /// Called when the rotation of the [TransformableBox] starts.
+  void onRotateStart(Offset localPosition) {
+    _initialLocalPosition = localPosition;
+    _initialRect = rect;
+    _initialRotation = rotation;
+  }
+
+  /// Called when the [TransformableBox] is being rotated.
+  UIRotateResult onRotateUpdate(
+    Offset localPosition,
+    HandlePosition handle, {
+    bool notify = true,
+  }) {
+    final UIRotateResult result = UIBoxTransform.rotate(
+      rect: initialRect,
+      initialLocalPosition: initialLocalPosition,
+      initialRotation: initialRotation,
+      localPosition: localPosition,
+      clampingRect: clampingRect,
+      bindingStrategy: bindingStrategy,
+    );
+
+    _rotation = result.rotation;
+    _boundingRect = result.boundingRect;
+
+    if (notify) notifyListeners();
+
+    return result;
+  }
+
+  /// Called when the rotation of the [TransformableBox] ends.
+  void onRotateEnd({bool notify = true}) {
+    _initialLocalPosition = Offset.zero;
+    _initialRect = Rect.zero;
+    _initialRotation = 0.0;
+
+    if (notify) notifyListeners();
+  }
+
+  /// Called when the rotation of the [TransformableBox] is cancelled.
+  void onRotateCancel({bool notify = true}) => onRotateEnd(notify: notify);
 
   /// Called when the resizing starts on [TransformableBox].
   ///
@@ -285,15 +380,18 @@ class TransformableBoxController extends ChangeNotifier {
       handle: handle,
       initialRect: initialRect,
       initialLocalPosition: initialLocalPosition,
+      rotation: rotation,
       resizeMode: resizeModeResolver?.call() ?? this.resizeModeResolver(),
       initialFlip: initialFlip,
       clampingRect: clampingRect,
       constraints: constraints,
       allowFlipping: allowFlippingWhileResizing,
+      bindingStrategy: bindingStrategy,
     );
 
     _rect = result.rect;
     _flip = result.flip;
+    _boundingRect = result.boundingRect;
 
     if (notify) notifyListeners();
     return result;
@@ -319,9 +417,12 @@ class TransformableBoxController extends ChangeNotifier {
       initialLocalPosition: initialLocalPosition,
       localPosition: initialLocalPosition,
       clampingRect: clampingRect,
+      rotation: rotation,
+      bindingStrategy: bindingStrategy,
     );
 
     _rect = result.rect;
+    _boundingRect = result.boundingRect;
 
     if (notify) notifyListeners();
   }
@@ -334,14 +435,17 @@ class TransformableBoxController extends ChangeNotifier {
       initialLocalPosition: initialLocalPosition,
       localPosition: initialLocalPosition,
       clampingRect: clampingRect,
+      rotation: rotation,
       handle: HandlePosition.bottomRight,
-      resizeMode: ResizeMode.scale,
+      resizeMode: ResizeMode.freeform,
       initialFlip: initialFlip,
       constraints: constraints,
       allowFlipping: allowFlippingWhileResizing,
+      bindingStrategy: bindingStrategy,
     );
 
     _rect = result.rect;
+    _boundingRect = result.boundingRect;
 
     if (notify) notifyListeners();
   }

@@ -6,6 +6,7 @@ void main() {
   test('RawTransformResult extension tests', () {
     final result = RawTransformResult(
       rect: Box.fromLTRB(100, 100, 500, 400),
+      boundingRect: Box.fromLTRB(100, 100, 500, 400),
       handle: HandlePosition.bottomRight,
       flip: Flip.none,
       maxHeightReached: false,
@@ -13,10 +14,12 @@ void main() {
       minHeightReached: false,
       minWidthReached: false,
       oldRect: Box.fromLTRB(100, 100, 300, 200),
+      oldBoundingRect: Box.fromLTRB(100, 100, 300, 200),
       resizeMode: ResizeMode.freeform,
       largestRect: Box.fromLTRB(100, 100, 1000, 1000),
       rawSize: Dimension(400, 300),
       delta: Vector2(200, 200),
+      rotation: 0,
     );
 
     expect(result.size, result.rect.size);

@@ -543,9 +543,42 @@ Box getMinRectForScaling({
   );
 }
 
-/// [returns] whether the given [rect] is properly confined within its
-/// [constraints] but at the same time is not outside of the [clampingRect].
-bool isValidRect(Box rect, Constraints constraints, Box clampingRect) {
+/// Returns the largest intersection amount between the given [rect] and the
+/// [clampingRect]. If more than one side of [rect] intersects with
+/// [clampingRect], only the largest intersection is returned.
+///
+/// The returned value is made positive.
+({Side side, double amount, bool singleIntersection})
+    getLargestIntersectionDelta(Box rect, Box clampingRect) {
+  final Map<Side, double> intersections = {
+    Side.left: rect.left - clampingRect.left,
+    Side.top: rect.top - clampingRect.top,
+    Side.right: clampingRect.right - rect.right,
+    Side.bottom: clampingRect.bottom - rect.bottom,
+  };
+
+  // The largest intersection is represents by the smallest negative value.
+  final MapEntry<Side, double> largestIntersection =
+      intersections.entries.reduce((a, b) {
+    if (a.value < b.value) {
+      return a;
+    } else {
+      return b;
+    }
+  });
+
+  return (
+    side: largestIntersection.key,
+    amount: min(0.0, largestIntersection.value).abs(),
+    singleIntersection:
+        intersections.values.where((amount) => amount < 0).length <= 1,
+  );
+}
+
+bool isRectClamped(
+  Box rect,
+  Box clampingRect,
+) {
   if (clampingRect.left.roundToPrecision(4) > rect.left.roundToPrecision(4) ||
       clampingRect.top.roundToPrecision(4) > rect.top.roundToPrecision(4) ||
       clampingRect.right.roundToPrecision(4) < rect.right.roundToPrecision(4) ||
@@ -553,14 +586,47 @@ bool isValidRect(Box rect, Constraints constraints, Box clampingRect) {
           rect.bottom.roundToPrecision(4)) {
     return false;
   }
+
+  return true;
+}
+
+bool isRectConstrained(
+  Box rect,
+  Constraints constraints,
+) =>
+    constraints.isUnconstrained ||
+    (rect.width >= constraints.minWidth &&
+        rect.width <= constraints.maxWidth &&
+        rect.height >= constraints.minHeight &&
+        rect.height <= constraints.maxHeight);
+
+/// [returns] whether the given [checkClamp] is properly confined within its
+/// [constraints] but at the same time is not outside of the [clampingRect].
+bool isRectBound(
+  Box checkClamp,
+  Constraints constraints,
+  Box clampingRect, {
+  Box? checkConstraints,
+}) {
+  if (clampingRect.left.roundToPrecision(4) >
+          checkClamp.left.roundToPrecision(4) ||
+      clampingRect.top.roundToPrecision(4) >
+          checkClamp.top.roundToPrecision(4) ||
+      clampingRect.right.roundToPrecision(4) <
+          checkClamp.right.roundToPrecision(4) ||
+      clampingRect.bottom.roundToPrecision(4) <
+          checkClamp.bottom.roundToPrecision(4)) {
+    return false;
+  }
   if (!constraints.isUnconstrained) {
-    if (rect.width.roundToPrecision(4) <
+    final box = checkConstraints ?? checkClamp;
+    if (box.width.roundToPrecision(4) <
             constraints.minWidth.roundToPrecision(4) ||
-        rect.width.roundToPrecision(4) >
+        box.width.roundToPrecision(4) >
             constraints.maxWidth.roundToPrecision(4) ||
-        rect.height.roundToPrecision(4) <
+        box.height.roundToPrecision(4) <
             constraints.minHeight.roundToPrecision(4) ||
-        rect.height.roundToPrecision(4) >
+        box.height.roundToPrecision(4) >
             constraints.maxHeight.roundToPrecision(4)) {
       return false;
     }

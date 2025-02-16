@@ -1,6 +1,93 @@
 import 'package:vector_math/vector_math.dart';
 
+import '../box_transform.dart';
 import 'geometry.dart';
+
+/// Represents a cardinal side of a quadrilateral.
+enum Side {
+  /// The top side of the rect.
+  top,
+
+  /// The right side of the rect.
+  right,
+
+  /// The bottom side of the rect.
+  bottom,
+
+  /// The left side of the rect.
+  left;
+
+  /// Whether the side is top or not.
+  bool get isTop => this == Side.top;
+
+  /// Whether the side is right or not.
+  bool get isRight => this == Side.right;
+
+  /// Whether the side is bottom or not.
+  bool get isBottom => this == Side.bottom;
+
+  /// Whether the side is left or not.
+  bool get isLeft => this == Side.left;
+
+  /// Returns the handle position of the side.
+  HandlePosition get handlePosition => switch (this) {
+        Side.top => HandlePosition.top,
+        Side.right => HandlePosition.right,
+        Side.bottom => HandlePosition.bottom,
+        Side.left => HandlePosition.left,
+      };
+
+  /// Returns the opposite side of the given side.
+  Side get opposite => switch (this) {
+        Side.top => Side.bottom,
+        Side.right => Side.left,
+        Side.bottom => Side.top,
+        Side.left => Side.right,
+      };
+
+  /// Returns the side that is clockwise to the given side.
+  Side get clockWise => switch (this) {
+        Side.top => Side.right,
+        Side.right => Side.bottom,
+        Side.bottom => Side.left,
+        Side.left => Side.top,
+      };
+
+  /// Returns the side that is counter-clockwise to the given side.
+  Side get counterClockWise => switch (this) {
+        Side.top => Side.left,
+        Side.right => Side.top,
+        Side.bottom => Side.right,
+        Side.left => Side.bottom,
+      };
+
+  /// Whether the side is horizontal or not.
+  bool get isHorizontal => this == Side.left || this == Side.right;
+
+  /// Whether the side is vertical or not.
+  bool get isVertical => this == Side.top || this == Side.bottom;
+
+  /// Returns the length of the [rect] along the side.
+  double getLengthOf(Box rect) => switch (this) {
+        Side.top || Side.bottom => rect.height,
+        Side.left || Side.right => rect.width,
+      };
+}
+
+/// Represents the different quadrants of a rectangle.
+enum Quadrant {
+  /// The top left quadrant.
+  topLeft,
+
+  /// The top right quadrant.
+  topRight,
+
+  /// The bottom left quadrant.
+  bottomLeft,
+
+  /// The bottom right quadrant.
+  bottomRight,
+}
 
 /// Represents a resizing handle on corners.
 enum HandlePosition {
@@ -105,6 +192,15 @@ enum HandlePosition {
     HandlePosition.left,
     HandlePosition.right,
   ];
+
+  /// returns the quadrant of a corner handle.
+  Quadrant get quadrant => switch (this) {
+        HandlePosition.topLeft => Quadrant.topLeft,
+        HandlePosition.topRight => Quadrant.topRight,
+        HandlePosition.bottomLeft => Quadrant.bottomLeft,
+        HandlePosition.bottomRight => Quadrant.bottomRight,
+        _ => throw Exception('Invalid handle position. Corners only.'),
+      };
 
   /// Returns the opposite handle position on the horizontal axis.
   HandlePosition flipY() {
@@ -412,4 +508,22 @@ enum ResizeMode {
   /// Used to determine whether the resize should be symmetric and
   /// w.r.t the center.
   bool get hasSymmetry => isSymmetric || isSymmetricScale;
+}
+
+/// An enum that defines how a box should be constrained and/or clamped when
+/// undergoing a box transformation operation.
+enum BindingStrategy {
+  /// When a box transformation occurs, clamps and constraints are considered
+  /// on the original unrotated dimensions of the box. Rotation is not
+  /// considered with this strategy, and therefore, if a box is rotated,
+  /// its vertices may leak out of its terminal dimensions and positions.
+  originalBox,
+
+  /// When a box transformation occurs, clamps and constraints are considered
+  /// on the entire bounding box of the box. The bounding box is the smallest
+  /// box that can contain all the vertices of its rotated box.
+  ///
+  /// This is the default strategy to ensure that the box does not
+  /// leak out of its terminal dimensions and positions.
+  boundingBox,
 }

@@ -2,9 +2,9 @@ library;
 
 import 'dart:math';
 
-import '../enums.dart';
-import '../geometry.dart';
-import '../helpers.dart';
+import 'package:vector_math/vector_math.dart';
+
+import '../../box_transform.dart';
 
 part 'freeform_resizing.dart';
 part 'scale_resizing.dart';
@@ -43,5 +43,7 @@ sealed class Resizer {
     required HandlePosition handle,
     required Constraints constraints,
     required Flip flip,
+    required double rotation,
+    required BindingStrategy bindingStrategy,
   });
 }
